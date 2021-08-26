@@ -351,7 +351,7 @@ class FileDialog(
                         for (file in sourceFolder.listFiles()) {
                             if (file.isFile) {
                                 var mimeType: String = getMimeType(file)
-                                val newFile: DocumentFile? = destinationFolder?.createFile(mimeType, sourceFile!!.name.replaceFirst("[.][^.]+$", ""))
+                                val newFile: DocumentFile? = destinationFolder?.createFile(mimeType, file!!.name.replaceFirst("[.][^.]+$", ""))
 
                                 if (newFile != null) {
                                     saveFile(file, newFile.uri)
