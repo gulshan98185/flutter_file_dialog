@@ -34,8 +34,8 @@ class FlutterFileDialog {
   ///
   /// Returns path of the saved folder or null if operation was cancelled.
   /// Throws exception on error.
-  static Future<String?> saveFolder(String sourceFolderPath) {
-    return _channel.invokeMethod('saveFolder', SaveFolderDialogParams(sourceFolderPath).toJson());
+  static Future<String?> saveFolder(List<String> sourceFilePaths) {
+    return _channel.invokeMethod('saveMultipleFiles', SaveFolderDialogParams(sourceFilePaths).toJson());
   }
 }
 
@@ -180,14 +180,14 @@ class SaveFileDialogParams {
 class SaveFolderDialogParams {
   /// Path of the folder to save.
   /// Provide either [sourceFilePath] or [data].
-  final String sourceFolderPath;
+  final List<String> sourceFilePaths;
 
   /// Create parameters for the [saveFile] method.
-  const SaveFolderDialogParams(this.sourceFolderPath);
+  const SaveFolderDialogParams(this.sourceFilePaths);
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
-      'sourceFolderPath': sourceFolderPath,
+      'sourceFilePaths': sourceFilePaths,
     };
   }
 }

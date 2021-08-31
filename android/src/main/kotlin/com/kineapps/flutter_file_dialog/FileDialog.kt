@@ -11,7 +11,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.text.TextUtils
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.documentfile.provider.DocumentFile
@@ -28,13 +27,13 @@ private const val LOG_TAG = "FileDialog"
 
 private const val REQUEST_CODE_PICK_FILE = 19111
 private const val REQUEST_CODE_SAVE_FILE = 19112
-private const val REQUEST_CODE_SAVE_FOLDER = 19113
+private const val REQUEST_CODE_SAVE_MULTIPLE_FILES = 19113
 
 // https://developer.android.com/guide/topics/providers/document-provider
 // https://developer.android.com/reference/android/content/Intent.html#ACTION_CREATE_DOCUMENT
 // https://android.googlesource.com/platform/development/+/master/samples/ApiDemos/src/com/example/android/apis/content/DocumentsSample.java
 class FileDialog(
-        private val activity: Activity
+    private val activity: Activity
 ) : PluginRegistry.ActivityResultListener {
 
     private var flutterResult: MethodChannel.Result? = null
@@ -43,15 +42,20 @@ class FileDialog(
 
     // file to be saved
     private var sourceFile: File? = null
+    private var sourceFilePaths: List<String>? = null
     private var isSourceFileTemp: Boolean = false
 
-    fun pickFile(result: MethodChannel.Result,
-                 fileExtensionsFilter: Array<String>?,
-                 mimeTypesFilter: Array<String>?,
-                 localOnly: Boolean,
-                 copyFileToCacheDir: Boolean
+    fun pickFile(
+        result: MethodChannel.Result,
+        fileExtensionsFilter: Array<String>?,
+        mimeTypesFilter: Array<String>?,
+        localOnly: Boolean,
+        copyFileToCacheDir: Boolean
     ) {
-        Log.d(LOG_TAG, "pickFile - IN, fileExtensionsFilter=$fileExtensionsFilter, mimeTypesFilter=$mimeTypesFilter, localOnly=$localOnly, copyFileToCacheDir=$copyFileToCacheDir")
+        Log.d(
+            LOG_TAG,
+            "pickFile - IN, fileExtensionsFilter=$fileExtensionsFilter, mimeTypesFilter=$mimeTypesFilter, localOnly=$localOnly, copyFileToCacheDir=$copyFileToCacheDir"
+        )
 
         this.flutterResult = result
         this.fileExtensionsFilter = fileExtensionsFilter
@@ -69,16 +73,19 @@ class FileDialog(
         Log.d(LOG_TAG, "pickFile - OUT")
     }
 
-    fun saveFile(result: MethodChannel.Result,
-                 sourceFilePath: String?,
-                 data: ByteArray?,
-                 fileName: String?,
-                 mimeTypesFilter: Array<String>?,
-                 localOnly: Boolean
+    fun saveFile(
+        result: MethodChannel.Result,
+        sourceFilePath: String?,
+        data: ByteArray?,
+        fileName: String?,
+        mimeTypesFilter: Array<String>?,
+        localOnly: Boolean
     ) {
-        Log.d(LOG_TAG, "saveFile - IN, sourceFilePath=$sourceFilePath, " +
-                "data=${data?.size} bytes, fileName=$fileName, " +
-                "mimeTypesFilter=$mimeTypesFilter, localOnly=$localOnly")
+        Log.d(
+            LOG_TAG, "saveFile - IN, sourceFilePath=$sourceFilePath, " +
+                    "data=${data?.size} bytes, fileName=$fileName, " +
+                    "mimeTypesFilter=$mimeTypesFilter, localOnly=$localOnly"
+        )
 
         this.flutterResult = result
 
@@ -88,9 +95,10 @@ class FileDialog(
             sourceFile = File(sourceFilePath)
             if (!sourceFile!!.exists()) {
                 flutterResult?.error(
-                        "file_not_found",
-                        "Source file is missing",
-                        sourceFilePath)
+                    "file_not_found",
+                    "Source file is missing",
+                    sourceFilePath
+                )
                 return
             }
         } else {
@@ -114,30 +122,20 @@ class FileDialog(
     }
 
 
-    fun saveFolder(
-            result: MethodChannel.Result,
-            sourceFolderPath: String?
+    fun saveMultipleFiles(
+        result: MethodChannel.Result,
+        sourceFilePaths: List<String>
     ) {
-        Log.d(LOG_TAG, "saveFolder - IN, sourceFolderPath=$sourceFolderPath")
 
         this.flutterResult = result
 
-        if (sourceFolderPath != null) {
-            isSourceFileTemp = false
-            // get source file
-            sourceFile = File(sourceFolderPath)
-            if (!sourceFile!!.exists()) {
-                flutterResult?.error(
-                        "file_not_found",
-                        "Source file is missing",
-                        sourceFolderPath)
-                return
-            }
+        if (sourceFilePaths.isNotEmpty()) {
+            this.sourceFilePaths = sourceFilePaths
         } else {
             flutterResult?.error(
-                    "file_not_found",
-                    "Source file is missing",
-                    sourceFolderPath)
+                "file_not_found",
+                "Source file is missing"
+            )
 
             return
         }
@@ -145,7 +143,7 @@ class FileDialog(
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
         intent.putExtra("android.content.extra.SHOW_ADVANCED", true)
         intent.putExtra("android.content.extra.FANCY", true)
-        activity.startActivityForResult(intent, REQUEST_CODE_SAVE_FOLDER)
+        activity.startActivityForResult(intent, REQUEST_CODE_SAVE_MULTIPLE_FILES)
 
         Log.d(LOG_TAG, "saveFolder - OUT")
     }
@@ -173,17 +171,19 @@ class FileDialog(
                     if (destinationFileName != null && validateFileExtension(destinationFileName)) {
                         if (copyPickedFileToCacheDir) {
                             copyFileToCacheDirOnBackground(
-                                    context = activity,
-                                    sourceFileUri = sourceFileUri!!,
-                                    destinationFileName = destinationFileName)
+                                context = activity,
+                                sourceFileUri = sourceFileUri!!,
+                                destinationFileName = destinationFileName
+                            )
                         } else {
                             flutterResult?.success(sourceFileUri!!.toString())
                         }
                     } else {
                         flutterResult?.error(
-                                "invalid_file_extension",
-                                "Invalid file type was picked",
-                                getFileExtension(destinationFileName))
+                            "invalid_file_extension",
+                            "Invalid file type was picked",
+                            getFileExtension(destinationFileName)
+                        )
                     }
                 } else {
                     Log.d(LOG_TAG, "Cancelled")
@@ -206,10 +206,10 @@ class FileDialog(
                 return true
             }
 
-            REQUEST_CODE_SAVE_FOLDER -> {
+            REQUEST_CODE_SAVE_MULTIPLE_FILES -> {
                 if (resultCode == Activity.RESULT_OK && data?.data != null) {
                     val destinationFolderUri = data.data
-                    saveFolderOnBackground(this.sourceFile!!, destinationFolderUri!!)
+                    saveMultipleFileOnBackground(this.sourceFilePaths!!, destinationFolderUri!!)
                 } else {
                     Log.d(LOG_TAG, "Cancelled")
                     if (isSourceFileTemp) {
@@ -225,9 +225,10 @@ class FileDialog(
     }
 
     private fun copyFileToCacheDirOnBackground(
-            context: Context,
-            sourceFileUri: Uri,
-            destinationFileName: String) {
+        context: Context,
+        sourceFileUri: Uri,
+        destinationFileName: String
+    ) {
         val uiScope = CoroutineScope(Dispatchers.Main)
         uiScope.launch {
             try {
@@ -247,9 +248,10 @@ class FileDialog(
     }
 
     private fun copyFileToCacheDir(
-            context: Context,
-            sourceFileUri: Uri,
-            destinationFileName: String): String {
+        context: Context,
+        sourceFileUri: Uri,
+        destinationFileName: String
+    ): String {
         // get destination file on cache dir
         val destinationFile = File(context.cacheDir.path, destinationFileName)
 
@@ -268,7 +270,10 @@ class FileDialog(
             }
         }
 
-        Log.d(LOG_TAG, "Successfully copied file to '${destinationFile.absolutePath}, bytes=$copiedBytes'")
+        Log.d(
+            LOG_TAG,
+            "Successfully copied file to '${destinationFile.absolutePath}, bytes=$copiedBytes'"
+        )
 
         return destinationFile.absolutePath
     }
@@ -310,8 +315,8 @@ class FileDialog(
     }
 
     private fun saveFileOnBackground(
-            sourceFile: File,
-            destinationFileUri: Uri
+        sourceFile: File,
+        destinationFileUri: Uri
     ) {
         val uiScope = CoroutineScope(Dispatchers.Main)
         uiScope.launch {
@@ -337,31 +342,42 @@ class FileDialog(
         }
     }
 
-    private fun saveFolderOnBackground(
-            sourceFolder: File,
-            destinationFolderUri: Uri
+    private fun saveMultipleFileOnBackground(
+        sourceFilePaths: List<String>,
+        destinationFolderUri: Uri
     ) {
         val uiScope = CoroutineScope(Dispatchers.Main)
         uiScope.launch {
             try {
                 Log.d(LOG_TAG, "Saving folder on background...")
-                val destinationFolder: DocumentFile? = DocumentFile.fromTreeUri(activity, destinationFolderUri)
+                val destinationFolder: DocumentFile? =
+                    DocumentFile.fromTreeUri(activity, destinationFolderUri)
                 withContext(Dispatchers.IO) {
                     if (destinationFolder != null) {
-                        for (file in sourceFolder.listFiles()) {
-                            if (file.isFile) {
-                                var mimeType: String = getMimeType(file)
-                                val newFile: DocumentFile? = destinationFolder?.createFile(mimeType, file!!.name.replaceFirst("[.][^.]+$", ""))
+                        for ( src in sourceFilePaths){
+
+                        }
+                        for (path in sourceFilePaths) {
+                            val srcFile = File(path)
+                            if (srcFile.isFile) {
+                                var mimeType: String = getMimeType(srcFile)
+                                val newFile: DocumentFile? = destinationFolder?.createFile(
+                                    mimeType,
+                                    srcFile!!.name.replaceFirst("[.][^.]+$", "")
+                                )
 
                                 if (newFile != null) {
-                                    saveFile(file, newFile.uri)
+                                    saveFile(srcFile, newFile.uri)
                                 }
                             }
                         }
                     }
                 }
 
-                Log.d(LOG_TAG, "...saved folder on background, result: ${destinationFolderUri.path}")
+                Log.d(
+                    LOG_TAG,
+                    "...saved folder on background, result: ${destinationFolderUri.path}"
+                )
                 flutterResult?.success(destinationFolderUri.path)
             } catch (e: SecurityException) {
                 Log.e(LOG_TAG, "saveFileOnBackground", e)
@@ -379,8 +395,8 @@ class FileDialog(
     }
 
     private fun saveFile(
-            sourceFile: File,
-            destinationFileUri: Uri
+        sourceFile: File,
+        destinationFileUri: Uri
     ): String {
         Log.d(LOG_TAG, "Saving file '${sourceFile.path}' to '${destinationFileUri.path}'")
         sourceFile.inputStream().use { inputStream ->
@@ -400,10 +416,13 @@ class FileDialog(
             val cr: ContentResolver = activity.contentResolver
             cr.getType(uri)
         } else {
-            val fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri
-                    .toString())
+            val fileExtension = MimeTypeMap.getFileExtensionFromUrl(
+                uri
+                    .toString()
+            )
             MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-                    fileExtension.toLowerCase())
+                fileExtension.toLowerCase()
+            )
         }
         return if (mimeType != null && mimeType.isNotEmpty()) mimeType
         else "application/pdf"
