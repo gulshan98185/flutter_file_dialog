@@ -120,11 +120,11 @@ class _MyAppState extends State<MyApp> {
                 onPressed: _currentFile == null ? null : () => _saveFile(true),
                 child: const Text('Save file from data'),
               ),
-              ElevatedButton(
-                onPressed:
-                    _currentFile == null ? null : () => {FlutterFileDialog.saveFolder("/data/user/0/com.kineapps.flutter_file_dialog_example/cache")},
-                child: const Text('Save folder'),
-              ),
+              // ElevatedButton(
+              //   onPressed:
+              //       _currentFile == null ? null : () => {FlutterFileDialog.saveFolder("/data/user/0/com.kineapps.flutter_file_dialog_example/cache")},
+              //   child: const Text('Save folder'),
+              // ),
               Text(_savedFilePath ?? "-"),
               if (_isBusy) const CircularProgressIndicator(),
               CheckboxListTile(
