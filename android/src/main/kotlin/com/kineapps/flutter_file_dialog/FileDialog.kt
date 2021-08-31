@@ -124,17 +124,17 @@ class FileDialog(
 
     fun saveMultipleFiles(
         result: MethodChannel.Result,
-        sourceFilePaths: List<String>
+        sourceFilePaths: List<String>?
     ) {
 
         this.flutterResult = result
 
-        if (sourceFilePaths.isNotEmpty()) {
+        if (sourceFilePaths != null && sourceFilePaths.isNotEmpty()) {
             this.sourceFilePaths = sourceFilePaths
         } else {
             flutterResult?.error(
                 "file_not_found",
-                "Source file is missing"
+                "Source file is missing", ""
             )
 
             return
@@ -354,7 +354,7 @@ class FileDialog(
                     DocumentFile.fromTreeUri(activity, destinationFolderUri)
                 withContext(Dispatchers.IO) {
                     if (destinationFolder != null) {
-                        for ( src in sourceFilePaths){
+                        for (src in sourceFilePaths) {
 
                         }
                         for (path in sourceFilePaths) {

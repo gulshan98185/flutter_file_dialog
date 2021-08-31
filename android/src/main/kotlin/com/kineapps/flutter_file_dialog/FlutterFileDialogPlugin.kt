@@ -12,6 +12,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
@@ -151,7 +152,7 @@ class FlutterFileDialogPlugin : FlutterPlugin, ActivityAware, MethodCallHandler 
             )
             "saveMultipleFiles" -> fileDialog!!.saveMultipleFiles(
                     result,
-                sourceFilePaths = call.argument("sourceFilePaths") as List<String>
+                sourceFilePaths = call.argument("sourceFilePaths")
             )
             else -> result.notImplemented()
         }
