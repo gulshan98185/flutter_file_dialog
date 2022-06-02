@@ -164,10 +164,14 @@ class FlutterFileDialogPlugin : FlutterPlugin, ActivityAware, MethodCallHandler 
         var fileDialog: FileDialog? = null
         if (registrar != null) {
             // V1 embedding
-            fileDialog = FileDialog(
-                    activity = registrar!!.activity()
-            )
-            registrar!!.addActivityResultListener(fileDialog)
+            fileDialog = registrar!!.activity()?.let {
+                FileDialog(
+                    activity = it
+                )
+            }
+            if (fileDialog != null) {
+                registrar!!.addActivityResultListener(fileDialog)
+            }
         } else if (activityBinding != null) {
             // V2 embedding
             fileDialog = FileDialog(
