@@ -104,7 +104,7 @@ class FileDialog(
         } else {
             // write data to a temporary file
             isSourceFileTemp = true
-            sourceFile = File.createTempFile(fileName, "")
+            sourceFile = fileName?.let { File.createTempFile(it, "") }
             sourceFile!!.writeBytes(data!!)
         }
 
@@ -326,7 +326,39 @@ class FileDialog(
                     saveFile(sourceFile, destinationFileUri)
                 }
                 Log.d(LOG_TAG, "...saved file on background, result: $filePath")
-                flutterResult?.success(filePath)
+                // /document/80A3-09F0:Download/ff_56_6u/Scanify 09-Jul-2022 02-05 AM.pdf (1)
+                ///document/80A3-09F0:Notifications/Scanify
+                // /document/80A3-09F0:hh/Scanify 09-Jul-2022 02-05 AM.pdf
+                // /document/primary:Download/Scanify 09-Jul-2022 02-05
+                // /document/primary:Scanify 09-Jul-2022 02-05 AM.pdf
+                // /document/primary:gg/Scanify 09-Jul-2022 02-05 AM.pdf (2)
+
+                val path: String
+//                    /document/raw:/storage/emulated/0/Download/hhh/SCANIFY July 12, 2022 2-44 PM backup.zip
+                val split: List<String>? = filePath?.split(":")
+                path = if (split != null && split.size > 1) {
+
+                    if (split[0] == "/document/primary") {
+                        "Internal Storage:" + split[1]
+                    } else if (split[0] == "/document/raw") {
+                        "Internal Storage:" + split[1].split("/storage/emulated/0/").last()
+                    } else {
+                        "External Storage:" + split[1]
+                    }
+                } else if (destinationFileUri.toString()
+                        .startsWith("content://com.android.providers.downloads")
+                ) {
+                    val split2: List<String>? = filePath?.split("/")
+                    if (split2 != null) {
+                        "Internal Storage:downloads/" + split2[2]
+                    } else {
+                        filePath ?: ""
+                    }
+                } else {
+                    filePath.toString()
+                }
+
+                flutterResult?.success(path)
             } catch (e: SecurityException) {
                 Log.e(LOG_TAG, "saveFileOnBackground", e)
                 flutterResult?.error("security_exception", e.localizedMessage, e.toString())
@@ -354,16 +386,13 @@ class FileDialog(
                     DocumentFile.fromTreeUri(activity, destinationFolderUri)
                 withContext(Dispatchers.IO) {
                     if (destinationFolder != null) {
-                        for (src in sourceFilePaths) {
-
-                        }
                         for (path in sourceFilePaths) {
                             val srcFile = File(path)
                             if (srcFile.isFile) {
-                                var mimeType: String = getMimeType(srcFile)
-                                val newFile: DocumentFile? = destinationFolder?.createFile(
+                                val mimeType: String = getMimeType(srcFile)
+                                val newFile: DocumentFile? = destinationFolder.createFile(
                                     mimeType,
-                                    srcFile!!.name.replaceFirst("[.][^.]+$", "")
+                                    srcFile.name.replaceFirst("[.][^.]+$", "")
                                 )
 
                                 if (newFile != null) {
@@ -378,7 +407,30 @@ class FileDialog(
                     LOG_TAG,
                     "...saved folder on background, result: ${destinationFolderUri.path}"
                 )
-                flutterResult?.success(destinationFolderUri.path)
+                val path: String
+//                /tree/80A3-09F0:Download/ff_56_6u
+//                /tree/primary:Download/doc
+
+                val split: List<String>? = destinationFolderUri.path?.split(":")
+                path = if (split != null && split.size > 1) {
+
+                    if (split[0] == "/tree/primary") {
+                        "Internal Storage:" + split[1]
+                    } else if (split[0] == "/tree/raw") {
+                        "Internal Storage:" + split[1].split("/storage/emulated/0/").last()
+                    } else {
+                        "External Storage:" + split[1]
+                    }
+                } else {
+                    if (destinationFolderUri.path?.startsWith("/tree/downloads") == true) {
+                        "Internal Storage:downloads"
+                    } else {
+                        destinationFolderUri.path.toString()
+                    }
+                }
+
+
+                flutterResult?.success(path)
             } catch (e: SecurityException) {
                 Log.e(LOG_TAG, "saveFileOnBackground", e)
                 flutterResult?.error("security_exception", e.localizedMessage, e.toString())
@@ -397,7 +449,7 @@ class FileDialog(
     private fun saveFile(
         sourceFile: File,
         destinationFileUri: Uri
-    ): String {
+    ): String? {
         Log.d(LOG_TAG, "Saving file '${sourceFile.path}' to '${destinationFileUri.path}'")
         sourceFile.inputStream().use { inputStream ->
             activity.contentResolver.openOutputStream(destinationFileUri).use { outputStream ->
@@ -405,14 +457,13 @@ class FileDialog(
             }
         }
         Log.d(LOG_TAG, "Saved file to '${destinationFileUri.path}'")
-        return destinationFileUri.path!!
+        return destinationFileUri.path
     }
 
 
     fun getMimeType(file: File): String {
         val uri = Uri.fromFile(file)
-        var mimeType: String? = null
-        mimeType = if (ContentResolver.SCHEME_CONTENT == uri.scheme) {
+        val mimeType: String? = if (ContentResolver.SCHEME_CONTENT == uri.scheme) {
             val cr: ContentResolver = activity.contentResolver
             cr.getType(uri)
         } else {
@@ -421,7 +472,7 @@ class FileDialog(
                     .toString()
             )
             MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-                fileExtension.toLowerCase()
+                fileExtension.lowercase()
             )
         }
         return if (mimeType != null && mimeType.isNotEmpty()) mimeType
