@@ -23,20 +23,20 @@ class FlutterFileDialogPlugin : FlutterPlugin, ActivityAware, MethodCallHandler 
     private var methodChannel: MethodChannel? = null
 
     // V1 only
-    private var registrar: Registrar? = null
+    // private var registrar: Registrar? = null
 
-    companion object {
-        const val LOG_TAG = "FlutterFileDialogPlugin"
-        @JvmStatic
-        fun registerWith(registrar: Registrar) {
-            Log.d(LOG_TAG, "registerWith")
-            if (registrar.activity() != null) {
-                val plugin = FlutterFileDialogPlugin()
-                plugin.doOnAttachedToEngine(registrar.messenger())
-                plugin.doOnAttachedToActivity(null, registrar)
-            }
-        }
-    }
+    // companion object {
+    //     const val LOG_TAG = "FlutterFileDialogPlugin"
+    //     @JvmStatic
+    //     fun registerWith(registrar: Registrar) {
+    //         Log.d(LOG_TAG, "registerWith")
+    //         if (registrar.activity() != null) {
+    //             val plugin = FlutterFileDialogPlugin()
+    //             plugin.doOnAttachedToEngine(registrar.messenger())
+    //             plugin.doOnAttachedToActivity(null, registrar)
+    //         }
+    //     }
+    // }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         Log.d(LOG_TAG, "onAttachedToEngine - IN")
@@ -102,12 +102,13 @@ class FlutterFileDialogPlugin : FlutterPlugin, ActivityAware, MethodCallHandler 
         Log.d(LOG_TAG, "doOnDetachedFromEngine - OUT")
     }
 
-    private fun doOnAttachedToActivity(activityBinding: ActivityPluginBinding?,
-                                       registrar: Registrar? = null) {
+    private fun doOnAttachedToActivity(activityBinding: ActivityPluginBinding?
+                                    ) {
+        // registrar: Registrar? = null
         Log.d(LOG_TAG, "doOnAttachedToActivity - IN")
 
         this.activityBinding = activityBinding
-        this.registrar = registrar
+        // this.registrar = registrar
 
         Log.d(LOG_TAG, "doOnAttachedToActivity - OUT")
     }
@@ -153,30 +154,39 @@ class FlutterFileDialogPlugin : FlutterPlugin, ActivityAware, MethodCallHandler 
         }
     }
 
+    // private fun createFileDialog(): Boolean {
+    //     Log.d(LOG_TAG, "createFileDialog - IN")
+
+    //     var fileDialog: FileDialog? = null
+    //     if (registrar != null) {
+    //         // V1 embedding
+    //         fileDialog = FileDialog(
+    //                 activity = registrar!!.activity()
+    //         )
+    //         registrar!!.addActivityResultListener(fileDialog)
+    //     } else if (activityBinding != null) {
+    //         // V2 embedding
+    //         fileDialog = FileDialog(
+    //                 activity = activityBinding!!.activity
+    //         )
+    //         activityBinding!!.addActivityResultListener(fileDialog)
+    //     }
+    //     this.fileDialog = fileDialog
+
+    //     Log.d(LOG_TAG, "createFileDialog - OUT")
+
+    //     return fileDialog != null
+    // }
+
     private fun createFileDialog(): Boolean {
-        Log.d(LOG_TAG, "createFileDialog - IN")
+    val binding = activityBinding ?: return false
 
-        var fileDialog: FileDialog? = null
-        if (registrar != null) {
-            // V1 embedding
-            fileDialog = FileDialog(
-                    activity = registrar!!.activity()
-            )
-            registrar!!.addActivityResultListener(fileDialog)
-        } else if (activityBinding != null) {
-            // V2 embedding
-            fileDialog = FileDialog(
-                    activity = activityBinding!!.activity
-            )
-            activityBinding!!.addActivityResultListener(fileDialog)
-        }
-        this.fileDialog = fileDialog
-
-        Log.d(LOG_TAG, "createFileDialog - OUT")
-
-        return fileDialog != null
+    fileDialog = FileDialog(activity = binding.activity)
+    binding.addActivityResultListener(fileDialog!!)
+    return true
     }
 
+    
     private fun parseMethodCallArrayArgument(call: MethodCall, arg: String): Array<String>? {
         if (call.hasArgument(arg)) {
             return call.argument<ArrayList<String>>(arg)?.toTypedArray()
