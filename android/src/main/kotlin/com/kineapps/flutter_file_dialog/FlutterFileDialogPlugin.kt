@@ -14,7 +14,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.PluginRegistry.Registrar
+// import io.flutter.plugin.common.PluginRegistry.Registrar
 
 class FlutterFileDialogPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     private var fileDialog: FileDialog? = null
@@ -23,20 +23,20 @@ class FlutterFileDialogPlugin : FlutterPlugin, ActivityAware, MethodCallHandler 
     private var methodChannel: MethodChannel? = null
 
     // V1 only
-    private var registrar: Registrar? = null
+    // private var registrar: Registrar? = null
 
     companion object {
         const val LOG_TAG = "FlutterFileDialogPlugin"
 
-        @JvmStatic
-        fun registerWith(registrar: Registrar) {
-            Log.d(LOG_TAG, "registerWith")
-            if (registrar.activity() != null) {
-                val plugin = FlutterFileDialogPlugin()
-                plugin.doOnAttachedToEngine(registrar.messenger())
-                plugin.doOnAttachedToActivity(null, registrar)
-            }
-        }
+        // @JvmStatic
+        // fun registerWith(registrar: Registrar) {
+        //     Log.d(LOG_TAG, "registerWith")
+        //     if (registrar.activity() != null) {
+        //         val plugin = FlutterFileDialogPlugin()
+        //         plugin.doOnAttachedToEngine(registrar.messenger())
+        //         plugin.doOnAttachedToActivity(null, registrar)
+        //     }
+        // }
     }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -162,17 +162,18 @@ class FlutterFileDialogPlugin : FlutterPlugin, ActivityAware, MethodCallHandler 
         Log.d(LOG_TAG, "createFileDialog - IN")
 
         var fileDialog: FileDialog? = null
-        if (registrar != null) {
-            // V1 embedding
-            fileDialog = registrar!!.activity()?.let {
-                FileDialog(
-                    activity = it
-                )
-            }
-            if (fileDialog != null) {
-                registrar!!.addActivityResultListener(fileDialog)
-            }
-        } else if (activityBinding != null) {
+        // if (registrar != null) {
+        //     // V1 embedding
+        //     fileDialog = registrar!!.activity()?.let {
+        //         FileDialog(
+        //             activity = it
+        //         )
+        //     }
+        //     if (fileDialog != null) {
+        //         registrar!!.addActivityResultListener(fileDialog)
+        //     }
+        // } else
+        if (activityBinding != null) {
             // V2 embedding
             fileDialog = FileDialog(
                     activity = activityBinding!!.activity
