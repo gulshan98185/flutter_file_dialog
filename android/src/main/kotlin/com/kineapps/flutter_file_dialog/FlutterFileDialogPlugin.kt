@@ -104,11 +104,12 @@ class FlutterFileDialogPlugin : FlutterPlugin, ActivityAware, MethodCallHandler 
     }
 
     private fun doOnAttachedToActivity(activityBinding: ActivityPluginBinding?,
-                                       registrar: Registrar? = null) {
+                                       ) {
+        // registrar: Registrar? = null
         Log.d(LOG_TAG, "doOnAttachedToActivity - IN")
 
         this.activityBinding = activityBinding
-        this.registrar = registrar
+        // this.registrar = registrar
 
         Log.d(LOG_TAG, "doOnAttachedToActivity - OUT")
     }
